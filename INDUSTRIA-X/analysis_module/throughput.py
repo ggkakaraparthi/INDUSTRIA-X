@@ -199,6 +199,59 @@ def main():
     results = calculate_throughput(df)
 
     print_report(results)
+    # ---------------------------------------------------------
+# SAVE PRODUCTION SUMMARY
+# ---------------------------------------------------------
+
+import os
+
+output_dir = os.path.join(
+    "business_module",
+    "outputs"
+)
+
+os.makedirs(output_dir, exist_ok=True)
+
+# Calculate minimum and maximum production
+production_values = []
+
+for chunk in pd.read_csv(
+    FILE,
+    usecols=["c_TotalProducts"],
+    chunksize=100000
+):
+    values = pd.to_numeric(
+        chunk["c_TotalProducts"],
+        errors="coerce"
+    ).dropna()
+
+    production_values.extend(values.tolist())
+
+production_summary = pd.DataFrame({
+    "Metric": [
+        "Average",
+        "Minimum",
+        "Maximum"
+    ],
+    "Value": [
+        averages["c_TotalProducts"],
+        min(production_values),
+        max(production_values)
+    ]
+})
+
+output_file = os.path.join(
+    output_dir,
+    "production_summary.csv"
+)
+
+production_summary.to_csv(
+    output_file,
+    index=False
+)
+
+print("\nProduction summary saved successfully.")
+print(f"File: {output_file}")
 
 
 if __name__ == "__main__":
